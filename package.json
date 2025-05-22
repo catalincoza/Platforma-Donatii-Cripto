@@ -1,0 +1,29 @@
+{
+  "name": "platforma-donatii-cripto",
+  "version": "1.0.0",
+  "description": "Proiect privat pentru cursul de blockchain\r Echipa:\r - Coza Catalin\r - Andreica Dragos\r - Sinn Erich\r - Sovago Rares",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/catalincoza/Platforma-Donatii-Cripto.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/catalincoza/Platforma-Donatii-Cripto/issues"
+  },
+  "homepage": "https://github.com/catalincoza/Platforma-Donatii-Cripto#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.24.0"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "web3": "^4.16.0"
+  }
+}
