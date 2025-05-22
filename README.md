@@ -1,7 +1,16 @@
-# Platforma-Donatii-Cripto
-Proiect privat pentru cursul de blockchain
-Echipa:
-- Coza Catalin
-- Andreica Dragos
+# Platformă de donații descentralizată
+Această platformă permite oricui să doneze direct și transparent către cauze umanitare sau proiecte sociale, folosind criptomonede. Fiecare campanie de donație este reprezentată de un smart contract care urmărește toate contribuțiile. Fondurile pot fi transferate automat beneficiarului la îndeplinirea unor condiții prestabilite (ex. atingerea unui prag minim).
+
+## Tehnologii:
+- Blockchain platform: Ethereum
+- Smart contracts: Solidity
+- Frontend: React + web3.js
+- Framework: Hardhat
+- Portofel digital: MetaMask
+- Stocare pentru imagini/documente: IPFS
+
+## Autori:
+- Coza Cătălin
+- Andreica Dragoș
 - Sinn Erich
-- Sovago Rares
+- Șovago Rareș
