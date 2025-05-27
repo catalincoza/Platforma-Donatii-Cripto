@@ -10,8 +10,8 @@ async function main() {
   const DonationCampaign = await hre.ethers.getContractFactory("DonationCampaign");
   const campaign = await DonationCampaign.deploy(title, description, goal);
 
-  await campaign.deployed();
-  console.log(`✅ Contractul a fost deployat la: ${campaign.address}`);
+  const receipt = await campaign.deploymentTransaction().wait();
+  console.log(`✅ Contractul a fost deployat la: ${campaign.target}`);
 
   const frontendDir = path.join(__dirname, "../frontend/src/contracts");
   if (!fs.existsSync(frontendDir)) {
@@ -23,18 +23,21 @@ async function main() {
     path.join(frontendDir, "DonationCampaign.json"),
     JSON.stringify(artifact, null, 2)
   );
+
   fs.writeFileSync(
     path.join(frontendDir, "contract-address.json"),
-    JSON.stringify({ DonationCampaign: campaign.address }, null, 2)
+    JSON.stringify({ DonationCampaign: campaign.target }, null, 2)
   );
 
   fs.writeFileSync(
     path.join(__dirname, "config.js"),
     `module.exports = {
-  campaignAddress: "${campaign.address}",
+  campaignAddress: "${campaign.target}",
   donationAmountETH: "0.1"
 };\n`
   );
+
+  console.log("✅ Adresa și ABI-ul au fost salvate în frontend și config.js");
 }
 
 main().catch((error) => {

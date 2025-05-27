@@ -1,4 +1,4 @@
 module.exports = {
-  campaignAddress: "0x...", // ← înlocuiește cu adresa reală
-  donationAmountETH: "0.1", // valoare implicită pentru donate.js
+  campaignAddress: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  donationAmountETH: "0.1"
 };
