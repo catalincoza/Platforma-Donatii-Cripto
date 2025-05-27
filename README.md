@@ -4,10 +4,9 @@ Această platformă permite oricui să doneze direct și transparent către cauz
 ## Tehnologii:
 - Blockchain platform: Ethereum
 - Smart contracts: Solidity
-- Frontend: React + web3.js
+- Frontend: React + ethers.js
 - Framework: Hardhat
 - Portofel digital: MetaMask
-- Stocare pentru imagini/documente: IPFS
 
 ## Autori:
 - Coza Cătălin
