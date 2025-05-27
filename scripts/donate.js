@@ -1,23 +1,22 @@
 const hre = require("hardhat");
+const { campaignAddress, donationAmountETH } = require("./config");
 
 async function main() {
-  const campaignAddress = "0x..."; // adresa contractului deja deployat
   const [donator] = await hre.ethers.getSigners();
 
-  const DonationCampaign = await hre.ethers.getContractFactory(
-    "DonationCampaign"
-  );
+  const DonationCampaign = await hre.ethers.getContractFactory("DonationCampaign");
   const campaign = await DonationCampaign.attach(campaignAddress);
 
-  const tx = await campaign
-    .connect(donator)
-    .donate({ value: hre.ethers.utils.parseEther("0.1") });
+  const value = hre.ethers.parseEther(donationAmountETH);
+
+  console.log(`🔁 ${donator.address} donează ${donationAmountETH} ETH...`);
+  const tx = await campaign.connect(donator).donate({ value });
   await tx.wait();
 
-  console.log("Donatie trimisa de pe:", donator.address);
+  console.log("✅ Donația a fost procesată cu succes.");
 }
 
 main().catch((error) => {
-  console.error(error);
+  console.error("❌ Eroare la donație:", error);
   process.exitCode = 1;
 });
