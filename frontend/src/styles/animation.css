@@ -1,0 +1,141 @@
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes counterRotate {
+  from { transform: rotate(0deg) scale(0.8); }
+  to { transform: rotate(-360deg) scale(1.2); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.1; }
+}
+
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.1; }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5), 0 0 10px #FFD700;
+  }
+  to {
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5), 0 0 20px #FFD700, 0 0 30px #FFD700;
+  }
+}
+
+@keyframes bubble {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-10px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-80px) scale(1);
+  }
+}
+
+@keyframes sparkle {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1) rotate(180deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0) rotate(360deg);
+  }
+}
+
+@keyframes fastBubble {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-15px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) scale(0.5);
+  }
+}
+
+@keyframes enhancedSparkle {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(0deg) translateY(0);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1.2) rotate(72deg) translateY(-10px);
+  }
+  80% {
+    opacity: 1;
+    transform: scale(0.8) rotate(288deg) translateY(-40px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0) rotate(360deg) translateY(-60px);
+  }
+}
+
+@keyframes expandRing {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(4);
+  }
+}
+
+@keyframes ripple {
+  0% {
+    width: 0px;
+    height: 0px;
+    opacity: 1;
+  }
+  100% {
+    width: 200px;
+    height: 200px;
+    opacity: 0;
+  }
+}
