@@ -1,46 +1,34 @@
-# Platformă de donații descentralizată
-Această platformă permite oricui să doneze direct și transparent către cauze umanitare sau proiecte sociale, folosind criptomonede. Fiecare campanie de donație este reprezentată de un smart contract care urmărește toate contribuțiile. Fondurile pot fi transferate automat beneficiarului la îndeplinirea unor condiții prestabilite (ex. atingerea unui prag minim).
+# 🌍 Platforma-Donatii-Cripto
 
-## Tehnologii:
-- Blockchain platform: Ethereum
-- Smart contracts: Solidity
-- Frontend: React + web3.js
-- Framework: Hardhat
-- Portofel digital: MetaMask
-- Stocare pentru imagini/documente: IPFS
+O aplicație descentralizată (dApp) pentru susținerea campaniilor caritabile pe blockchain. Utilizatorii pot propune campanii, iar adminul le poate aproba sau respinge. Donațiile se fac în ETH, direct pe contractul campaniei.
 
-## Autori:
-- Coza Cătălin
-- Andreica Dragoș
-- Sinn Erich
-- Șovago Rareș
+---
 
-## Cerințe:
-- Node.js
-- MetaMask instalat în browser
+## 🛠️ Instalare
 
-## Instalare și rulare locală:
+### 1. Clonare proiect
 
-### 1. Clonare repo
 ```bash
 git clone https://github.com/catalincoza/Platforma-Donatii-Cripto.git
 cd Platforma-Donatii-Cripto
 ```
 
-### 2. Rulare HardHat node
-```
-npx hardhat node
-```
-- Se vor afișa 20 de conturi publice cu ETH pentru testare.
-- ⚠️ Nu închide acest terminal! Restul pașilor pot fi urmați în terminale separate.
+### 2. Instalare dependențe (o singură dată)
 
-### 3. Rulare script deploy
-```
-npx hardhat run scripts/deploy.js --network localhost
+#### Backend (Hardhat)
+
+```bash
+npm install
 ```
 
-### 4. Adăugare network & cont în MetaMask
+#### Frontend
 
+```bash
+cd frontend
+npm install
+```
+
+#### MetaMask
 | Câmp                | Valoare                 |
 | ------------------- | ----------------------- |
 | **Network Name**    | `Hardhat Local`         |
@@ -49,10 +37,92 @@ npx hardhat run scripts/deploy.js --network localhost
 | **Currency Symbol** | `ETH`                   |
 | **Block Explorer**  | *(gol)*       |
 
-Contul (sau conturile) se adaugă din 'Account' -> '+ Add account or hardware wallet' -> 'Private Key' -> Introdu cheia privată din conturile afișate după rularea node-ului Hardhat (vezi pas 1). Fiecare cont va avea 10.000 ETH pentru testare.
+## ⚙️ Rulare aplicație locală
 
-### 5. Pornire aplicație React
+### 1. Pornește rețeaua locală Hardhat
+
+```bash
+npx hardhat node
 ```
+
+> Va rula o rețea blockchain pe `localhost:8545`.
+
+### 2. Deployează contractul Factory
+
+```bash
+npx hardhat run scripts/deployFactory.js --network localhost
+```
+
+> Scriptul:
+> - Compilează contractele
+> - Deployează `DonationCampaignFactory`
+> - Salvează ABI + adresă în `frontend/src/contracts/factory-address.json`
+
+### 3. Rulează aplicația React
+
+```bash
 cd frontend
 npm start
 ```
+
+> Aplicația va fi disponibilă la `http://localhost:3000`
+
+---
+
+## ✍️ Crearea unei campanii (manual)
+
+1. Accesează aplicația
+2. Apasă pe **„Propune o campanie”**
+3. Completează:
+   - Titlu
+   - Descriere
+   - Țintă (ETH)
+4. Trimite propunerea
+5. Adminul (user: admin, parolă: admin123) o poate aproba din pagina **Admin Dashboard**
+
+---
+
+## ⚡ Crearea unei campanii (automat, cu script)
+
+Scriptul `deployCampaign.js` propune și aprobă automat o campanie:
+
+```bash
+npx hardhat run scripts/deployCampaign.js --network localhost
+```
+
+> Rezultat: o campanie complet funcțională creată pe blockchain.
+
+---
+
+## 🧪 Funcționalități
+
+- ✅ Propunere campanii de utilizatori
+- ✅ Aprobare / respingere de către admin
+- ✅ Donare ETH cu nume + email
+- ✅ Vizualizare progres și listă donatori
+- ✅ Retragerea fondurilor la finalizare
+- ✅ Interfață MUI modernă
+
+---
+
+## 🧠 Stack Tehnologic
+
+| Tehnologie       | Rol                         |
+|------------------|------------------------------|
+| Solidity         | Smart contracts              |
+| Hardhat          | Framework dezvoltare         |
+| ethers.js        | Interacțiune blockchain      |
+| React.js         | Frontend interactiv          |
+| Material UI      | Interfață modernă            |
+| MetaMask         | Portofel tranzacții          |
+
+---
+
+## 👤 Echipa
+
+- Coza Cătălin  
+- Andreica Dragoș  
+- Sinn Erich  
+- Șovago Rareș  
+
+---
