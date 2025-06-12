@@ -4,10 +4,10 @@ import { BrowserProvider, Contract, parseEther, formatEther } from "ethers";
 import { useLocation } from "react-router-dom";
 import { Box, Button, Typography, Card, CardContent } from "@mui/material";
 
-import DonationCampaignABI from "./contracts/DonationCampaign.json";
-import contractAddressJson from "./contracts/contract-address.json";
+import DonationCampaignABI from "./contracts/DonationCampaignFactory.json";
+import contractAddressJson from "./contracts/factory-address.json";
 
-const contractAddress = contractAddressJson.DonationCampaign;
+const contractAddress = contractAddressJson.DonationCampaignFactory;
 
 function App() {
   const location = useLocation();
@@ -157,6 +157,13 @@ function App() {
       >
         💝 Donează
       </Button>
+      <Button
+  variant="outlined"
+  sx={{ mt: 4, ml: 2 }}
+  onClick={() => window.location.href = "/all-campaigns"}
+>
+  Înapoi la Home
+</Button>
     </Box>
   );
 }

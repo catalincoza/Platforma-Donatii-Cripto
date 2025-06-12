@@ -1,19 +1,47 @@
-import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TextField, TablePagination, styled } from "@mui/material";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
+import {
+  Box, Typography, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, Paper, TextField, TablePagination, styled
+} from "@mui/material";
+import { BrowserProvider, Contract, formatEther } from "ethers";
+import FactoryABI from "../contracts/DonationCampaignFactory.json";
+import factoryAddress from "../contracts/factory-address.json";
+
+const factoryAddressString = factoryAddress.DonationCampaignFactory;
 
 const CampaignProposals = () => {
-  const campaigns = [
-    { id: 1, title: "Educație pentru copii", type: "Educație", creator: "John Doe", goal: "100 ETH", description: "Ajută la educația copiilor din zonele rurale", status: "Pending", rezultat: "Refuzat" },
-    { id: 2, title: "Ajutor medical pentru spitale", type: "Medical", creator: "Jane Smith", goal: "500 ETH", description: "Furnizează echipamente pentru spitale", status: "Pending", rezultat: "Acceptat" },
-    { id: 3, title: "Salvarea animalelor abandonate", type: "Animale", creator: "Tom Green", goal: "150 ETH", description: "Ajută animalele fără adăpost", status: "Pending", rezultat: "Refuzat" },
-    { id: 4, title: "Ajutor pentru comunități", type: "Social", creator: "Alice Johnson", goal: "200 ETH", description: "Sprijină comunități sărace", status: "Pending", rezultat: "Acceptat" },
-    { id: 5, title: "Refacerea infrastructurii", type: "Business", creator: "Mark Thomas", goal: "400 ETH", description: "Reconstruiește infrastructura orașului", status: "Pending", rezultat: "Refuzat" },
-    { id: 6, title: "Protejarea mediului", type: "Environment", creator: "Sarah Lee", goal: "300 ETH", description: "Salvează mediul înconjurător", status: "Pending", rezultat: "Acceptat" },
-  ];
-
+  const [proposals, setProposals] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  useEffect(() => {
+    async function fetchProposals() {
+      try {
+        const provider = new BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const contract = new Contract(factoryAddressString, FactoryABI.abi, signer);
+
+        const proposalCount = await contract.proposals.length;
+        const rawProposals = await contract.getProposals();
+
+        const parsedProposals = rawProposals.map((p, idx) => ({
+          id: idx,
+          title: p.title,
+          description: p.description,
+          creator: p.proposer,
+          goal: formatEther(p.goal),
+          status: p.approved ? "Acceptat" : (p.rejected ? "Refuzat" : "Pending"),
+        }));
+
+        setProposals(parsedProposals);
+      } catch (err) {
+        console.error("Eroare la încărcarea propunerilor:", err.message);
+      }
+    }
+
+    fetchProposals();
+  }, []);
 
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value);
@@ -25,27 +53,26 @@ const CampaignProposals = () => {
 
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);  
+    setPage(0);
   };
 
-  const filteredCampaigns = campaigns.filter((campaign) =>
-    Object.values(campaign).some(val =>
+  const filtered = proposals.filter((p) =>
+    Object.values(p).some(val =>
       val.toString().toLowerCase().includes(searchQuery.toLowerCase())
     )
   );
 
-  const paginatedCampaigns = filteredCampaigns.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
     <StyledBox>
       <Typography variant="h4" color="white" gutterBottom align="center">
-        Propoziții Campanii
+        Propoziții Campanii (din Blockchain)
       </Typography>
 
       <StyledTextField
         label="Căutare campanii"
         variant="outlined"
-       
         value={searchQuery}
         onChange={handleSearchChange}
       />
@@ -54,27 +81,25 @@ const CampaignProposals = () => {
         <Table sx={{ minWidth: 650 }} aria-label="campaign proposals table">
           <TableHead>
             <TableRow>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>Titlu Campanie</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>Tipul Campaniei</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }}>Titlu</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Creator</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>Gol</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }}>Țintă (ETH)</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Descriere</TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>Acceptat/Refuzat</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }}>Status</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {paginatedCampaigns.map((campaign) => (
-              <TableRow key={campaign.id}>
-                <TableCell sx={{ color: "white" }}>{campaign.title}</TableCell>
-                <TableCell sx={{ color: "white" }}>{campaign.type}</TableCell>
-                <TableCell sx={{ color: "white" }}>{campaign.creator}</TableCell>
-                <TableCell sx={{ color: "white" }}>{campaign.goal}</TableCell>
-                <TableCell sx={{ color: "white" }}>{campaign.description}</TableCell>
+            {paginated.map((p) => (
+              <TableRow key={p.id}>
+                <TableCell sx={{ color: "white" }}>{p.title}</TableCell>
+                <TableCell sx={{ color: "white" }}>{p.creator}</TableCell>
+                <TableCell sx={{ color: "white" }}>{p.goal}</TableCell>
+                <TableCell sx={{ color: "white" }}>{p.description}</TableCell>
                 <TableCell sx={{
-                  color: campaign.rezultat === "Acceptat" ? "#5bde75" : "#fa202b",
+                  color: p.status === "Acceptat" ? "#5bde75" : (p.status === "Refuzat" ? "#fa202b" : "#FFD700"),
                   fontWeight: "bold"
                 }}>
-                  {campaign.rezultat}
+                  {p.status}
                 </TableCell>
               </TableRow>
             ))}
@@ -82,11 +107,10 @@ const CampaignProposals = () => {
         </Table>
       </TableContainer>
 
-      {/* Pagination */}
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component="div"
-        count={filteredCampaigns.length}
+        count={filtered.length}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}
@@ -99,6 +123,7 @@ const CampaignProposals = () => {
 
 export default CampaignProposals;
 
+// --- Styling
 const StyledBox = styled(Box)(() => ({
   minHeight: "100vh",
   background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
@@ -109,24 +134,14 @@ const StyledBox = styled(Box)(() => ({
 }));
 
 const StyledTextField = styled(TextField)({
-          marginBottom: '1rem', 
-          width: "100%", 
-          maxWidth: "400px", 
-          "& .MuiOutlinedInput-root": {
-            "& fieldset": {
-              borderColor: "white",  
-            },
-            "&:hover fieldset": {
-              borderColor: "white",  
-            },
-            "&.Mui-focused fieldset": {
-              borderColor: "white", 
-            },
-          },
-          "& .MuiInputLabel-root": {
-            color: "white", 
-          },
-          "& .MuiInputBase-input": {
-            color: "white",  
-          },
-})
+  marginBottom: '1rem',
+  width: "100%",
+  maxWidth: "400px",
+  "& .MuiOutlinedInput-root": {
+    "& fieldset": { borderColor: "white" },
+    "&:hover fieldset": { borderColor: "white" },
+    "&.Mui-focused fieldset": { borderColor: "white" },
+  },
+  "& .MuiInputLabel-root": { color: "white" },
+  "& .MuiInputBase-input": { color: "white" },
+});
