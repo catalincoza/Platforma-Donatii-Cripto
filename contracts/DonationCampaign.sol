@@ -1,141 +1,220 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.19;
 
-/**
- * @title DonationCampaign
- * @notice Gestionează o campanie de donații: acceptă donații, rambursări dacă nu se atinge ținta,
- * și permite proprietarului să retragă fondurile.
- */
 contract DonationCampaign {
-    // Metadate campanie
-    string public title;             // Titlul campaniei
-    string public description;       // Descrierea campaniei
-    address public owner;            // Adresa celui care a creat campania
-    uint256 public goal;             // Suma țintă (în wei)
-    uint256 public raised;           // Totalul fondurilor strânse
-    uint256 public createdAt;        // Timpul la care a fost creată campania
-    bool public finalized;           // Dacă a fost finalizată campania
-    bool public withdrawn;           // Dacă fondurile au fost deja retrase
+    struct Donation {
+        address donor;
+        uint256 amount;
+        string donorName;
+        string donorEmail;
+        uint256 timestamp;
+    }
 
-    // Mapare între adresele donatorilor și suma donată
-    mapping(address => uint256) public contributions;
+    struct CampaignDetails {
+        string title;
+        string description;
+        address creator;
+        uint256 goal;
+        uint256 raised;
+        uint256 createdAt;
+        bool finalized;
+    }
 
-    // Evenimente pentru transparență (frontend și loguri)
-    event DonationReceived(address indexed donor, uint256 amount);
-    event FundsWithdrawn(address indexed owner, uint256 amount);
-    event RefundIssued(address indexed donor, uint256 amount);
-    event CampaignFinalized(bool successful);
+    address public creator;
+    string public title;
+    string public description;
+    uint256 public goal;
+    uint256 public raised;
+    uint256 public createdAt;
+    bool public finalized;
 
-    // Modifier pentru a restricționa accesul doar proprietarului
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Doar proprietarul poate apela");
+    Donation[] public donations;
+    mapping(address => uint256) public donorContributions;
+
+    event DonationReceived(
+        address indexed donor,
+        uint256 amount,
+        string donorName,
+        string donorEmail,
+        uint256 timestamp
+    );
+    
+    event CampaignFinalized(uint256 totalRaised);
+
+    modifier onlyCreator() {
+        require(msg.sender == creator, "Doar creatorul poate executa aceasta actiune");
         _;
     }
 
-    // Modifier care permite executia doar daca campania e finalizata
-    modifier onlyFinalized() {
-        require(finalized, "Campania nu este finalizata");
+    modifier notFinalized() {
+        require(!finalized, "Campania este deja finalizata");
         _;
     }
 
-    /**
-     * @dev Constructorul setează metadatele campaniei
-     * @param _title Titlul campaniei
-     * @param _description Descrierea campaniei
-     * @param _goal Suma țintă dorită (în wei)
-     */
     constructor(
         string memory _title,
         string memory _description,
+        address _creator,
         uint256 _goal
     ) {
-        require(_goal > 0, "Pragul trebuie sa fie pozitiv");
+        require(_goal > 0, "Obiectivul trebuie sa fie mai mare decat 0");
+        require(bytes(_title).length > 0, "Titlul nu poate fi gol");
+        require(_creator != address(0), "Adresa creatorului nu poate fi 0");
+
         title = _title;
         description = _description;
+        creator = _creator;
         goal = _goal;
-        owner = msg.sender;
+        raised = 0;
         createdAt = block.timestamp;
         finalized = false;
-        withdrawn = false;
     }
 
-    /**
-     * @dev Permite oricui să trimită o donație în ETH către contract
-     */
-    function donate() public payable {
-        require(!finalized, "Campania a fost finalizata");
-        require(msg.value > 0, "Donatia trebuie sa fie mai mare decat zero");
-        contributions[msg.sender] += msg.value;
-        raised += msg.value;
-        emit DonationReceived(msg.sender, msg.value);
-    }
-
-    /**
-     * @dev Finalizează campania - poate fi apelată o singură dată de către owner
-     */
-    function finalizeCampaign() external onlyOwner {
-        require(!finalized, "Campania este deja finalizata");
-        finalized = true;
-        bool successful = raised >= goal;
-        emit CampaignFinalized(successful);
-    }
-
-    /**
-     * @dev Retrage fondurile strânse, dacă s-a atins obiectivul. Poate fi apelată o singură dată.
-     */
-    function withdraw() external onlyOwner onlyFinalized {
-        require(raised >= goal, "Target-ul nu a fost atins");
-        require(!withdrawn, "Fondurile au fost deja retrase");
-
-        withdrawn = true;
-        uint256 balance = address(this).balance;
-        payable(owner).transfer(balance);
-
-        emit FundsWithdrawn(owner, balance);
-    }
-
-    /**
-     * @dev Rambursează automat contribuțiile, dacă campania a eșuat (nu a atins goal)
-     */
-    function refund() external onlyFinalized {
-        require(raised < goal, "Target-ul a fost atins, nu se pot face rambursari");
-
-        uint256 contributed = contributions[msg.sender];
-        require(contributed > 0, "Nu exista contributii de rambursat");
-
-        contributions[msg.sender] = 0;
-        payable(msg.sender).transfer(contributed);
-
-        emit RefundIssued(msg.sender, contributed);
-    }
-
-    /**
-     * @dev Returnează toate detaliile campaniei (pentru interfața frontend)
-     */
-    function getDetails()
-        external
-        view
-        returns (
-            string memory _title,
-            string memory _description,
-            address _owner,
-            uint256 _goal,
-            uint256 _raised,
-            uint256 _createdAt,
-            bool _finalized
-        )
+    function donate(string memory _donorName, string memory _donorEmail) 
+        external 
+        payable 
+        notFinalized 
     {
-        return (title, description, owner, goal, raised, createdAt, finalized);
+        require(msg.value > 0, "Suma donatiei trebuie sa fie mai mare decat 0");
+        
+        _processDonation(_donorName, _donorEmail);
     }
 
-    /**
-     * @dev Permite trimiterea directă de ETH la contract ca donație (fallback)
-     */
-    receive() external payable {
-        donate();
+    function _processDonation(string memory _donorName, string memory _donorEmail) 
+        internal 
+    {
+        // Default name if empty
+        string memory donorName = bytes(_donorName).length > 0 ? _donorName : "Anonim";
+        
+        // Create donation record
+        Donation memory newDonation = Donation({
+            donor: msg.sender,
+            amount: msg.value,
+            donorName: donorName,
+            donorEmail: _donorEmail,
+            timestamp: block.timestamp
+        });
+
+        donations.push(newDonation);
+        donorContributions[msg.sender] += msg.value;
+        raised += msg.value;
+
+        emit DonationReceived(
+            msg.sender,
+            msg.value,
+            donorName,
+            _donorEmail,
+            block.timestamp
+        );
     }
 
-    fallback() external payable {
-        donate();
+    function finalizeCampaign() public onlyCreator notFinalized {
+        require(raised > 0, "Nu exista fonduri de retras");
+        
+        finalized = true;
+        uint256 amount = address(this).balance;
+        
+        (bool success, ) = payable(creator).call{value: amount}("");
+        require(success, "Transferul a esuat");
+        
+        emit CampaignFinalized(raised);
+    }
+
+    function getDetails() external view returns (
+        string memory,
+        string memory,
+        address,
+        uint256,
+        uint256,
+        uint256,
+        bool
+    ) {
+        return (
+            title,
+            description,
+            creator,
+            goal,
+            raised,
+            createdAt,
+            finalized
+        );
+    }
+
+    function getDonationsCount() external view returns (uint256) {
+        return donations.length;
+    }
+
+    function getDonation(uint256 index) external view returns (
+        address donor,
+        uint256 amount,
+        string memory donorName,
+        string memory donorEmail,
+        uint256 timestamp
+    ) {
+        require(index < donations.length, "Index invalid");
+        Donation memory donation = donations[index];
+        return (
+            donation.donor,
+            donation.amount,
+            donation.donorName,
+            donation.donorEmail,
+            donation.timestamp
+        );
+    }
+
+    function getAllDonations() external view returns (
+        address[] memory donors,
+        uint256[] memory amounts,
+        string[] memory names,
+        string[] memory emails,
+        uint256[] memory timestamps
+    ) {
+        uint256 length = donations.length;
+        
+        donors = new address[](length);
+        amounts = new uint256[](length);
+        names = new string[](length);
+        emails = new string[](length);
+        timestamps = new uint256[](length);
+
+        for (uint256 i = 0; i < length; i++) {
+            donors[i] = donations[i].donor;
+            amounts[i] = donations[i].amount;
+            names[i] = donations[i].donorName;
+            emails[i] = donations[i].donorEmail;
+            timestamps[i] = donations[i].timestamp;
+        }
+    }
+
+    function getProgressPercentage() external view returns (uint256) {
+        if (goal == 0) return 0;
+        return (raised * 100) / goal;
+    }
+
+    function canFinalize() external view returns (bool) {
+        return !finalized && raised >= goal && msg.sender == creator;
+    }
+
+    function getBalance() external view returns (uint256) {
+        return address(this).balance;
+    }
+
+    // Emergency function - doar pentru situații extreme
+    function emergencyWithdraw() external onlyCreator {
+        require(block.timestamp > createdAt + 365 days, "Campania este prea recenta");
+        
+        finalized = true;
+        uint256 amount = address(this).balance;
+        
+        (bool success, ) = payable(creator).call{value: amount}("");
+        require(success, "Transferul a esuat");
+        
+        emit CampaignFinalized(raised);
+    }
+
+    // Fallback function pentru a primi ETH direct
+    receive() external payable notFinalized {
+        require(msg.value > 0, "Suma donatiei trebuie sa fie mai mare decat 0");
+        _processDonation("Anonim", "");
     }
 }

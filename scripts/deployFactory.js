@@ -17,10 +17,17 @@ async function main() {
   }
 
   // === ABI Factory
-  const artifact = await hre.artifacts.readArtifact("DonationCampaignFactory");
+  const factoryArtifact = await hre.artifacts.readArtifact("DonationCampaignFactory");
   fs.writeFileSync(
     path.join(frontendDir, "DonationCampaignFactory.json"),
-    JSON.stringify(artifact, null, 2)
+    JSON.stringify(factoryArtifact, null, 2)
+  );
+
+  // === ABI DonationCampaign
+  const campaignArtifact = await hre.artifacts.readArtifact("DonationCampaign");
+  fs.writeFileSync(
+    path.join(frontendDir, "DonationCampaign.json"),
+    JSON.stringify(campaignArtifact, null, 2)
   );
 
   // === Adresă Factory
@@ -29,20 +36,15 @@ async function main() {
     JSON.stringify({ DonationCampaignFactory: address }, null, 2)
   );
 
-  // === Opțional: ștergem contract-address.json dacă există
-  const oldAddressFile = path.join(frontendDir, "contract-address.json");
-  if (fs.existsSync(oldAddressFile)) {
-    fs.unlinkSync(oldAddressFile);
-    console.log("🧹 Fișierul contract-address.json a fost șters (nu mai este necesar).");
-  }
-
-  // === Config backend (opțional)
+  // === Opțional: config backend
   fs.writeFileSync(
     path.join(__dirname, "factory-config.js"),
     `module.exports = {
   factoryAddress: "${address}"
 };\n`
   );
+
+  console.log("✅ ABI-urile și adresa factory salvate în frontend.");
 }
 
 main().catch((error) => {

@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
 import {
   Box, Card, CardContent, Typography, Button, LinearProgress, Avatar,
-  Modal, Fade, List, ListItem, ListItemAvatar, ListItemText, Divider, Backdrop
+  Modal, Fade, List, ListItem, ListItemAvatar, ListItemText, Divider, 
+  Backdrop, TextField, Dialog, DialogTitle, DialogContent, DialogActions,
+  Alert, CircularProgress, InputAdornment
 } from "@mui/material";
 import CampaignIcon from "@mui/icons-material/VolunteerActivism";
 import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
-import { BrowserProvider, Contract, formatEther } from "ethers";
+import PersonIcon from "@mui/icons-material/Person";
+import EmailIcon from "@mui/icons-material/Email";
+import { BrowserProvider, Contract, formatEther, parseEther } from "ethers";
 
 import CampaignABI from "../contracts/DonationCampaign.json";
 import FactoryABI from "../contracts/DonationCampaignFactory.json";
@@ -19,129 +23,173 @@ const AllCampaigns = () => {
   const [selected, setSelected] = useState(null);
   const [donations, setDonations] = useState([]);
   const [open, setOpen] = useState(false);
+  const [donationDialog, setDonationDialog] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [donating, setDonating] = useState(false);
+  const [success, setSuccess] = useState("");
+  
+  // Donation form state
+  const [donationForm, setDonationForm] = useState({
+    amount: "",
+    name: "",
+    email: ""
+  });
+
   const navigate = useNavigate();
 
   useEffect(() => {
-    async function fetchCampaigns() {
-      try {
-        setLoading(true);
-        setError("");
-        
-        console.log("🔍 Starting to fetch campaigns...");
-        console.log("📍 Factory address:", factoryAddress);
-        
-        // Check if MetaMask is available
-        if (!window.ethereum) {
-          throw new Error("MetaMask nu este instalat!");
-        }
-
-        const provider = new BrowserProvider(window.ethereum);
-        const signer = await provider.getSigner();
-        const factory = new Contract(factoryAddress, FactoryABI.abi, signer);
-
-        console.log("🏭 Factory contract initialized");
-        
-        const count = await factory.getCampaignCount();
-        console.log("📊 Total campaigns count:", count.toString());
-
-        if (count.toString() === "0") {
-          console.log("⚠️ No campaigns found in factory");
-          setCampaigns([]);
-          setLoading(false);
-          return;
-        }
-
-        const data = [];
-
-        for (let i = 0; i < count; i++) {
-          try {
-            console.log(`🔄 Processing campaign ${i + 1}/${count}...`);
-            
-            const address = await factory.getCampaignAddress(i);
-            console.log(`📍 Campaign ${i} address:`, address);
-            
-            const campaign = new Contract(address, CampaignABI.abi, signer);
-            console.log(`📋 Campaign ${i} contract initialized`);
-            
-            const details = await campaign.getDetails();
-            console.log(`📝 Campaign ${i} details:`, details);
-
-            const campaignData = {
-              address,
-              contract: campaign,
-              title: details[0],
-              description: details[1],
-              creator: details[2],
-              goal: parseFloat(formatEther(details[3])),
-              raised: parseFloat(formatEther(details[4])),
-              createdAt: details[5],
-              finalized: details[6],
-            };
-
-            console.log(`✅ Campaign ${i} data processed:`, campaignData);
-            data.push(campaignData);
-            
-          } catch (err) {
-            console.error(`❌ Error processing campaign ${i}:`, err);
-            console.error("Error details:", err.message);
-            // Continue processing other campaigns
-          }
-        }
-
-        console.log("📦 Final campaigns array:", data);
-        console.log("🔢 Total campaigns loaded:", data.length);
-        
-        setCampaigns(data);
-        
-      } catch (e) {
-        console.error("💥 Main error in fetchCampaigns:", e);
-        console.error("Error message:", e.message);
-        console.error("Error stack:", e.stack);
-        setError(`Eroare la încărcarea campaniilor: ${e.message}`);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchCampaigns();
   }, []);
 
+  async function fetchCampaigns() {
+    try {
+      setLoading(true);
+      setError("");
+      
+      if (!window.ethereum) {
+        throw new Error("MetaMask nu este instalat!");
+      }
+
+      const provider = new BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const factory = new Contract(factoryAddress, FactoryABI.abi, signer);
+
+      const count = await factory.getCampaignCount();
+
+      if (count.toString() === "0") {
+        setCampaigns([]);
+        setLoading(false);
+        return;
+      }
+
+      const data = [];
+
+      for (let i = 0; i < count; i++) {
+        try {
+          const address = await factory.getCampaignAddress(i);
+          const campaign = new Contract(address, CampaignABI.abi, signer);
+          const details = await campaign.getDetails();
+
+          const campaignData = {
+            address,
+            contract: campaign,
+            title: details[0],
+            description: details[1],
+            creator: details[2],
+            goal: parseFloat(formatEther(details[3])),
+            raised: parseFloat(formatEther(details[4])),
+            createdAt: details[5],
+            finalized: details[6],
+          };
+
+          data.push(campaignData);
+          
+        } catch (err) {
+          console.error(`Error processing campaign ${i}:`, err);
+        }
+      }
+      
+      setCampaigns(data);
+      
+    } catch (e) {
+      console.error("Error fetching campaigns:", e);
+      setError(`Eroare la încărcarea campaniilor: ${e.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const handleOpenModal = async (campaign) => {
     try {
-      console.log("🔍 Opening modal for campaign:", campaign.title);
       setSelected(campaign);
       setOpen(true);
       
-      console.log("📋 Fetching donations for campaign...");
+      // Fetch donation events
       const events = await campaign.contract.queryFilter(
         campaign.contract.filters.DonationReceived(),
         0,
         "latest"
       );
       
-      console.log("📨 Donation events found:", events.length);
-      
       const donationsArray = events.map(ev => ({
         donor: ev.args.donor,
         amount: parseFloat(formatEther(ev.args.amount)),
+        name: ev.args.donorName || "Anonim",
+        email: ev.args.donorEmail || "",
+        timestamp: new Date().toLocaleDateString() // You might want to get this from blockchain
       }));
       
-      console.log("💰 Processed donations:", donationsArray);
       setDonations(donationsArray);
       
     } catch (err) {
-      console.error("❌ Error fetching donations:", err);
+      console.error("Error fetching donations:", err);
       setDonations([]);
     }
   };
 
-  // Debug render
-  console.log("🎨 Rendering AllCampaigns component");
-  console.log("📊 Current state - campaigns:", campaigns.length);
-  console.log("⏳ Loading state:", loading);
-  console.log("❌ Error state:", error);
+  const handleDonationSubmit = async () => {
+    if (!donationForm.amount || parseFloat(donationForm.amount) <= 0) {
+      setError("Suma donației trebuie să fie mai mare decât 0");
+      return;
+    }
+
+    try {
+      setDonating(true);
+      setError("");
+      setSuccess("");
+
+      const provider = new BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      
+      // Create contract instance for the selected campaign
+      const campaign = new Contract(selected.address, CampaignABI.abi, signer);
+      
+      const donationAmount = parseEther(donationForm.amount);
+      
+      // Call the donate function with optional name and email
+      // Note: You'll need to modify your smart contract to accept these parameters
+      const tx = await campaign.donate(
+        donationForm.name || "Anonim",
+        donationForm.email || "",
+        { value: donationAmount }
+      );
+
+      await tx.wait();
+      
+      setSuccess(`Donația de ${donationForm.amount} ETH a fost trimisă cu succes!`);
+      setDonationDialog(false);
+      
+      // Reset form
+      setDonationForm({ amount: "", name: "", email: "" });
+      
+      // Refresh campaigns and donations
+      await fetchCampaigns();
+      if (selected) {
+        await handleOpenModal(selected);
+      }
+      
+    } catch (err) {
+      console.error("Donation error:", err);
+      setError(`Eroare la procesarea donației: ${err.message}`);
+    } finally {
+      setDonating(false);
+    }
+  };
+
+  const openDonationDialog = (campaign) => {
+    setSelected(campaign);
+    setDonationDialog(true);
+    setError("");
+    setSuccess("");
+  };
+
+  const handleFormChange = (field, value) => {
+    setDonationForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   return (
     <Box sx={{
@@ -152,31 +200,31 @@ const AllCampaigns = () => {
         🌟 Campaniile active pe blockchain
       </Typography>
 
+      {/* Success Alert */}
+      {success && (
+        <Box mb={4} display="flex" justifyContent="center">
+          <Alert severity="success" sx={{ maxWidth: 600 }}>
+            {success}
+          </Alert>
+        </Box>
+      )}
+
+      {/* Error Alert */}
+      {error && (
+        <Box mb={4} display="flex" justifyContent="center">
+          <Alert severity="error" sx={{ maxWidth: 600 }}>
+            {error}
+          </Alert>
+        </Box>
+      )}
+
       {/* Loading state */}
       {loading && (
         <Box textAlign="center" mb={4}>
-          <Typography color="white" variant="h6">
+          <Typography color="white" variant="h6" mb={2}>
             🔄 Se încarcă campaniile...
           </Typography>
-          <LinearProgress sx={{ mt: 2, bgcolor: "rgba(255,255,255,0.2)" }} />
-        </Box>
-      )}
-
-      {/* Error state */}
-      {error && (
-        <Box textAlign="center" mb={4}>
-          <Typography color="error" variant="h6" sx={{ bgcolor: "rgba(255,255,255,0.9)", p: 2, borderRadius: 2 }}>
-            ❌ {error}
-          </Typography>
-        </Box>
-      )}
-
-      {/* Debug info */}
-      {!loading && (
-        <Box textAlign="center" mb={4}>
-          <Typography color="white" variant="body2">
-            🔍 Debug: {campaigns.length} campanii găsite
-          </Typography>
+          <CircularProgress sx={{ color: "white" }} />
         </Box>
       )}
 
@@ -185,9 +233,6 @@ const AllCampaigns = () => {
         <Box textAlign="center" mb={4}>
           <Typography color="white" variant="h6">
             📭 Nu există campanii disponibile momentan.
-          </Typography>
-          <Typography color="white" variant="body2" sx={{ mt: 1 }}>
-            Verificați consola pentru detalii despre debugging.
           </Typography>
         </Box>
       )}
@@ -234,29 +279,127 @@ const AllCampaigns = () => {
               }}>
                 {c.finalized ? "✅ Finalizată" : "🟢 Activă"}
               </Typography>
-              <Typography variant="caption" display="block" sx={{ mt: 1, fontSize: "0.7rem" }}>
-                📍 Adresa: {c.address.slice(0, 6)}...{c.address.slice(-4)}
-              </Typography>
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{
-                  mt: 3,
-                  bgcolor: "#FFD700",
-                  color: "#222",
-                  fontWeight: "bold",
-                  "&:hover": { bgcolor: "#ffe066", color: "#111" },
-                }}
-                onClick={() => handleOpenModal(c)}
-              >
-                Detalii campanie & Donatori
-              </Button>
+
+              {/* Action buttons */}
+              <Box sx={{ mt: 3, display: "flex", gap: 1, flexDirection: "column" }}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  sx={{
+                    bgcolor: "#FFD700",
+                    color: "#222",
+                    fontWeight: "bold",
+                    "&:hover": { bgcolor: "#ffe066", color: "#111" },
+                  }}
+                  onClick={() => openDonationDialog(c)}
+                  disabled={c.finalized}
+                >
+                  💝 Donează acum
+                </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  sx={{
+                    borderColor: "white",
+                    color: "white",
+                    "&:hover": { borderColor: "#FFD700", color: "#FFD700" },
+                  }}
+                  onClick={() => handleOpenModal(c)}
+                >
+                  📋 Detalii & Donatori
+                </Button>
+              </Box>
             </CardContent>
           </Card>
         </Box>
       ))}
 
-      {/* Modal Donatori */}
+      {/* Donation Dialog */}
+      <Dialog 
+        open={donationDialog} 
+        onClose={() => setDonationDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ textAlign: "center", fontWeight: "bold" }}>
+          💝 Donează pentru {selected?.title}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              label="Suma donației (ETH) *"
+              type="number"
+              value={donationForm.amount}
+              onChange={(e) => handleFormChange("amount", e.target.value)}
+              sx={{ mb: 3 }}
+              InputProps={{
+                startAdornment: <InputAdornment position="start">Ξ</InputAdornment>,
+              }}
+              helperText="Introduceti suma în ETH"
+            />
+            
+            <TextField
+              fullWidth
+              label="Numele tău (opțional)"
+              value={donationForm.name}
+              onChange={(e) => handleFormChange("name", e.target.value)}
+              sx={{ mb: 3 }}
+              InputProps={{
+                startAdornment: <InputAdornment position="start"><PersonIcon /></InputAdornment>,
+              }}
+              helperText="Dacă nu completezi, vei apărea ca 'Anonim'"
+            />
+            
+            <TextField
+              fullWidth
+              label="Email-ul tău (opțional)"
+              type="email"
+              value={donationForm.email}
+              onChange={(e) => handleFormChange("email", e.target.value)}
+              InputProps={{
+                startAdornment: <InputAdornment position="start"><EmailIcon /></InputAdornment>,
+              }}
+              helperText="Pentru a fi contactat în legătură cu donația"
+            />
+
+            {selected && (
+              <Box sx={{ mt: 3, p: 2, bgcolor: "rgba(0,0,0,0.05)", borderRadius: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  <strong>Campania:</strong> {selected.title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  <strong>Progres:</strong> {selected.raised} ETH / {selected.goal} ETH
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, gap: 1 }}>
+          <Button 
+            onClick={() => setDonationDialog(false)}
+            variant="outlined"
+            disabled={donating}
+          >
+            Anulează
+          </Button>
+          <Button 
+            onClick={handleDonationSubmit}
+            variant="contained"
+            disabled={donating || !donationForm.amount}
+            startIcon={donating ? <CircularProgress size={20} /> : null}
+            sx={{
+              bgcolor: "#FFD700",
+              color: "#222",
+              "&:hover": { bgcolor: "#ffe066" }
+            }}
+          >
+            {donating ? "Se procesează..." : "Confirmă donația"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Donors Modal */}
       <Modal
         open={open}
         onClose={() => setOpen(false)}
@@ -268,8 +411,8 @@ const AllCampaigns = () => {
           <Box sx={{
             position: "absolute", top: "50%", left: "50%",
             transform: "translate(-50%, -50%)",
-            width: { xs: "80%", sm: 400 },
-            maxHeight: "70vh",
+            width: { xs: "90%", sm: 500 },
+            maxHeight: "80vh",
             bgcolor: "background.paper",
             borderRadius: 3,
             boxShadow: 24,
@@ -277,12 +420,16 @@ const AllCampaigns = () => {
             outline: "none",
           }}>
             <Typography variant="h5" fontWeight="bold" gutterBottom>
-              Donatori pentru {selected?.title}
+              💰 Donatori pentru {selected?.title}
             </Typography>
             <Typography variant="body2" color="text.secondary" gutterBottom>
-              📍 Adresa contractului: {selected?.address}
+              📍 Contract: {selected?.address?.slice(0, 6)}...{selected?.address?.slice(-4)}
             </Typography>
-            <Box sx={{ maxHeight: "40vh", overflowY: "auto", pr: 1 }}>
+            <Typography variant="body2" color="text.secondary" gutterBottom sx={{ mb: 3 }}>
+              📊 Progres: {selected?.raised} ETH / {selected?.goal} ETH ({selected ? ((selected.raised / selected.goal) * 100).toFixed(1) : 0}%)
+            </Typography>
+            
+            <Box sx={{ maxHeight: "50vh", overflowY: "auto", pr: 1 }}>
               <List>
                 {donations.length > 0 ? donations.map((donor, i) => (
                   <React.Fragment key={i}>
@@ -293,16 +440,41 @@ const AllCampaigns = () => {
                         </Avatar>
                       </ListItemAvatar>
                       <ListItemText
-                        primary={`${donor.donor.slice(0, 6)}...${donor.donor.slice(-4)}`}
-                        secondary={`A donat ${donor.amount} ETH`}
+                        primary={
+                          <Box>
+                            <Typography variant="subtitle2" fontWeight="bold">
+                              {donor.name}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {donor.donor.slice(0, 6)}...{donor.donor.slice(-4)}
+                            </Typography>
+                          </Box>
+                        }
+                        secondary={
+                          <Box>
+                            <Typography variant="body2" color="primary" fontWeight="bold">
+                              💰 {donor.amount} ETH
+                            </Typography>
+                            {donor.email && (
+                              <Typography variant="caption" color="text.secondary">
+                                📧 {donor.email}
+                              </Typography>
+                            )}
+                          </Box>
+                        }
                       />
                     </ListItem>
                     {i < donations.length - 1 && <Divider />}
                   </React.Fragment>
                 )) : (
-                  <Typography variant="body2" sx={{ mt: 1, mb: 1 }}>
-                    💭 Nu există donații înregistrate încă.
-                  </Typography>
+                  <Box textAlign="center" py={4}>
+                    <Typography variant="body2" color="text.secondary">
+                      💭 Nu există donații înregistrate încă.
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Fii primul care donează pentru această cauză!
+                    </Typography>
+                  </Box>
                 )}
               </List>
             </Box>
