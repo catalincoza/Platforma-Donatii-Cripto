@@ -23,9 +23,6 @@ const WelcomePage = () => {
     title: "",
     description: "",
     goal: "",
-    creator: "",
-    reason: "",
-    type: "educatie", // valoare inițială validă
   });
   const [adminForm, setAdminForm] = useState({
     username: "",
@@ -44,6 +41,16 @@ const WelcomePage = () => {
 
   const handleSubmit = async () => {
     try {
+      if (!form.title || !form.description || !form.goal) {
+        setErrorMessage("Toate câmpurile sunt obligatorii.");
+        return;
+      }
+
+      if (isNaN(form.goal) || parseFloat(form.goal) <= 0) {
+        setErrorMessage("Ținta trebuie să fie un număr pozitiv.");
+        return;
+      }
+
       if (!window.ethereum) throw new Error("MetaMask nu este instalat.");
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
@@ -56,6 +63,8 @@ const WelcomePage = () => {
 
       setOpenModal(false);
       setOpenSnackbar(true);
+      setForm({ title: "", description: "", goal: "" });
+      setErrorMessage("");
     } catch (err) {
       console.error("Eroare la propunere:", err);
       setErrorMessage(err.message || "Eroare necunoscută");

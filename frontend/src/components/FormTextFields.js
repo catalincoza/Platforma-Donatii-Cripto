@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from "@mui/material";
+import { TextField } from "@mui/material";
 
 const FormTextFields = ({ form, handleChange }) => {
   return (
@@ -20,16 +14,18 @@ const FormTextFields = ({ form, handleChange }) => {
         sx={{ mb: 2 }}
       />
       <TextField
-        label="Creatorul Campaniei"
+        label="Descriere"
         variant="outlined"
         fullWidth
-        name="creator"
-        value={form.creator}
+        name="description"
+        value={form.description}
         onChange={handleChange}
+        multiline
+        rows={4}
         sx={{ mb: 2 }}
       />
       <TextField
-        label="Gol (ETH)"
+        label="Țintă (ETH)"
         variant="outlined"
         fullWidth
         name="goal"
@@ -38,51 +34,6 @@ const FormTextFields = ({ form, handleChange }) => {
         onChange={handleChange}
         sx={{ mb: 2 }}
       />
-      <TextField
-        label="Descriere"
-        variant="outlined"
-        fullWidth
-        name="description"
-        value={form.description}
-        onChange={handleChange}
-        sx={{
-          mb: 2,
-          maxHeight: "50rem",
-          "& textarea": {
-            resize: "both",
-            overflow: "auto",
-            maxHeight: "50rem",
-          },
-        }}
-        multiline
-        rows={4}
-      />
-      <TextField
-        label="Motiv"
-        variant="outlined"
-        fullWidth
-        name="reason"
-        value={form.reason}
-        onChange={handleChange}
-        sx={{ mb: 2 }}
-        multiline
-        rows={3}
-      />
-      <FormControl fullWidth sx={{ mb: 2 }}>
-        <InputLabel>Tip Campanie</InputLabel>
-        <Select
-          value={form.type}
-          onChange={handleChange}
-          label="Tip Campanie"
-          name="type"
-        >
-          <MenuItem value="educatie">Educație</MenuItem>
-          <MenuItem value="medical">Medical</MenuItem>
-          <MenuItem value="animale">Animale</MenuItem>
-          <MenuItem value="business">Business</MenuItem>
-          <MenuItem value="emergenta">Emergență</MenuItem>
-        </Select>
-      </FormControl>
     </>
   );
 };
