@@ -6,6 +6,7 @@ import WelcomePage from './pages/WelcomePage'
 import AllCampaigns from './pages/AllCampaigns';
 import Dashboard from './pages/admin/DashboardPage';
 import CampaignProposals from './pages/CampaignProposals';
+import CategoryCampaignsPage from './pages/CategoryCampaignsPage';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -17,6 +18,7 @@ root.render(
         <Route path="/all-campaigns" element={<AllCampaigns />} />
         <Route path="/campaign-proposals" element={<CampaignProposals />} />
         <Route path="/admin-dashboard" element={<Dashboard />} />
+        <Route path="/:category" element={<CategoryCampaignsPage />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>

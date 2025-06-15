@@ -14,6 +14,7 @@ contract DonationCampaignFactory {
         address proposer;
         string title;
         string description;
+        string category;
         uint256 goal;
         bool approved;
         bool rejected;
@@ -31,13 +32,15 @@ contract DonationCampaignFactory {
         _;
     }
 
-    function proposeCampaign(string memory _title, string memory _description, uint256 _goal) external {
+    function proposeCampaign(string memory _title, string memory _description, string memory _category, uint256 _goal) external {
         require(_goal > 0, "Suma trebuie sa fie pozitiva");
+        require(bytes(_category).length > 0, "Categoria este necesara");
 
         proposals.push(Proposal({
             proposer: msg.sender,
             title: _title,
             description: _description,
+            category: _category,
             goal: _goal,
             approved: false,
             rejected: false
@@ -51,11 +54,11 @@ contract DonationCampaignFactory {
         Proposal storage proposal = proposals[_id];
         require(!proposal.approved && !proposal.rejected, "Deja procesat");
 
-        // Creează campania cu toți cei 4 parametri necesari
         DonationCampaign newCampaign = new DonationCampaign(
             proposal.title,
             proposal.description,
-            proposal.proposer,  // <- Adăugat parametrul _creator
+            proposal.category,
+            proposal.proposer,
             proposal.goal
         );
 
@@ -71,16 +74,11 @@ contract DonationCampaignFactory {
         require(!proposal.approved && !proposal.rejected, "Deja procesat");
 
         proposal.rejected = true;
-
         emit CampaignRejected(_id);
     }
 
     function getProposals() external view returns (Proposal[] memory) {
         return proposals;
-    }
-
-    function getCampaigns() external view returns (DonationCampaign[] memory) {
-        return campaigns;
     }
 
     function getCampaignAddress(uint _index) external view returns (address) {
@@ -90,30 +88,5 @@ contract DonationCampaignFactory {
 
     function getCampaignCount() external view returns (uint256) {
         return campaigns.length;
-    }
-
-    function getProposalCount() external view returns (uint256) {
-        return proposals.length;
-    }
-
-    // Funcție utilă pentru a obține detaliile unei propuneri
-    function getProposal(uint _id) external view returns (
-        address proposer,
-        string memory title,
-        string memory description,
-        uint256 goal,
-        bool approved,
-        bool rejected
-    ) {
-        require(_id < proposals.length, "ID propunere invalid");
-        Proposal storage proposal = proposals[_id];
-        return (
-            proposal.proposer,
-            proposal.title,
-            proposal.description,
-            proposal.goal,
-            proposal.approved,
-            proposal.rejected
-        );
     }
 }

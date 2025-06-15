@@ -10,6 +10,11 @@ import Header from "../components/Header";
 import { useNavigate } from "react-router-dom";
 import contractABI from "../contracts/DonationCampaignFactory.json";
 import contractAddressJSON from "../contracts/factory-address.json";
+import educationImg from "../assets/Autism.jpg";
+import medicalImg from "../assets/Medical.jpg";
+import animalsImg from "../assets/Animal.jpg";
+import businessImg from "../assets/Business.png";
+import emergencyImg from "../assets/Natural.jpg";
 
 const contractAddress = contractAddressJSON.DonationCampaignFactory;
 
@@ -23,6 +28,7 @@ const WelcomePage = () => {
     title: "",
     description: "",
     goal: "",
+    category: ""
   });
   const [adminForm, setAdminForm] = useState({
     username: "",
@@ -41,12 +47,14 @@ const WelcomePage = () => {
 
   const handleSubmit = async () => {
     try {
-      if (!form.title || !form.description || !form.goal) {
+      const { title, description, goal, category } = form;
+
+      if (!title || !description || !goal || !category) {
         setErrorMessage("Toate câmpurile sunt obligatorii.");
         return;
       }
 
-      if (isNaN(form.goal) || parseFloat(form.goal) <= 0) {
+      if (isNaN(goal) || parseFloat(goal) <= 0) {
         setErrorMessage("Ținta trebuie să fie un număr pozitiv.");
         return;
       }
@@ -56,14 +64,14 @@ const WelcomePage = () => {
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(contractAddress, contractABI.abi, signer);
 
-      const goalInWei = ethers.parseEther(form.goal.toString());
+      const goalInWei = ethers.parseEther(goal.toString());
 
-      const tx = await contract.proposeCampaign(form.title, form.description, goalInWei);
+      const tx = await contract.proposeCampaign(title, description, category, goalInWei);
       await tx.wait();
 
       setOpenModal(false);
       setOpenSnackbar(true);
-      setForm({ title: "", description: "", goal: "" });
+      setForm({ title: "", description: "", goal: "", category: "" });
       setErrorMessage("");
     } catch (err) {
       console.error("Eroare la propunere:", err);
@@ -93,6 +101,49 @@ const WelcomePage = () => {
         >
           Admin
         </Button>
+
+        {/* Butoane categorii - FIXED ROUTES */}
+        <Typography variant="h5" textAlign="center" mb={4} mt={2} fontWeight="bold">
+          Alege o categorie de campanie:
+        </Typography>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 4, justifyContent: "center" }}>
+          {[
+            { label: "Educație", image: educationImg, category: "educatie" },
+            { label: "Medical", image: medicalImg, category: "medical" },
+            { label: "Animale", image: animalsImg, category: "animale" },
+            { label: "Business", image: businessImg, category: "business" },
+            { label: "Urgențe", image: emergencyImg, category: "emergenta" },
+          ].map(({ label, image, category }) => (
+            <Box
+              key={label}
+              sx={{
+                width: 200,
+                height: 160,
+                borderRadius: 2,
+                overflow: "hidden",
+                cursor: "pointer",
+                position: "relative",
+                boxShadow: 4,
+                "&:hover": { boxShadow: 8 },
+              }}
+              onClick={() => navigate(`/${category}`)}
+            >
+              <img src={image} alt={label} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <Box sx={{
+                position: "absolute",
+                bottom: 0,
+                width: "100%",
+                background: "rgba(0,0,0,0.6)",
+                color: "white",
+                textAlign: "center",
+                py: 1,
+                fontWeight: "bold"
+              }}>
+                {label}
+              </Box>
+            </Box>
+          ))}
+        </Box>
 
         {/* Modal campanie */}
         <Modal

@@ -18,34 +18,68 @@ async function main() {
   // === 3. Obține conturile (admin + user)
   const [admin, user] = await hre.ethers.getSigners();
 
-  // === 4. Propunere campanie nouă
-  const title = "Campanie de test rapid";
-  const description = "Aceasta este o campanie creată din script";
-  const goal = hre.ethers.parseEther("1.0");
+  // === 4. Campanii demo pentru fiecare categorie
+  const demoCampaigns = [
+    {
+      title: "Ajutor pentru educație în zone rurale",
+      description: "Campanie pentru rechizite și transport elevi",
+      category: "educatie",
+      goalEth: "2.0",
+    },
+    {
+      title: "Intervenție chirurgicală urgentă",
+      description: "Ajutor medical pentru copil diagnosticat recent",
+      category: "medical",
+      goalEth: "5.0",
+    },
+    {
+      title: "Adăpost pentru animale abandonate",
+      description: "Hrănire și îngrijire pentru 30 de câini",
+      category: "animale",
+      goalEth: "3.5",
+    },
+    {
+      title: "Startup de tehnologie verde",
+      description: "Soluții eco pentru orașe inteligente",
+      category: "business",
+      goalEth: "4.0",
+    },
+    {
+      title: "Ajutor pentru victimele inundațiilor",
+      description: "Refacerea caselor și bunurilor distruse",
+      category: "emergenta",
+      goalEth: "6.0",
+    },
+  ];
 
-  console.log("🚀 Propunem o campanie nouă...");
-  const proposeTx = await factory.connect(user).proposeCampaign(title, description, goal);
-  await proposeTx.wait();
+  for (const [index, c] of demoCampaigns.entries()) {
+    console.log(`\n📦 (${index + 1}/${demoCampaigns.length}) Propunem campania: ${c.title} [${c.category}]`);
 
-  // === 5. Obține indexul ultimei propuneri
-  const proposals = await factory.getProposals();
-  const latestIndex = proposals.length - 1;
+    const proposeTx = await factory.connect(user).proposeCampaign(
+      c.title,
+      c.description,
+      c.category,
+      hre.ethers.parseEther(c.goalEth)
+    );
+    await proposeTx.wait();
 
-  console.log(`📄 Ultima propunere are indexul: ${latestIndex}`);
+    const proposals = await factory.getProposals();
+    const latestIndex = proposals.length - 1;
+    console.log(`📝 Propunere înregistrată cu indexul: ${latestIndex}`);
 
-  // === 6. Acceptare propunere (admin)
-  console.log(`✅ Acceptăm propunerea de la indexul ${latestIndex}...`);
-  const acceptTx = await factory.connect(admin).acceptProposal(latestIndex);
-  const receipt = await acceptTx.wait();
+    const acceptTx = await factory.connect(admin).acceptProposal(latestIndex);
+    const receipt = await acceptTx.wait();
 
-  // === 7. Găsește adresa noului contract din eveniment
-  const event = receipt.logs.find(log => log.fragment?.name === "CampaignAccepted");
-  if (event) {
-    const newAddress = event.args.contractAddress;
-    console.log(`🎉 Campania a fost acceptată și creată la adresa: ${newAddress}`);
-  } else {
-    console.warn("⚠️ Campania a fost creată, dar nu s-a extras adresa din eveniment.");
+    const event = receipt.logs.find(log => log.fragment?.name === "CampaignAccepted");
+    if (event) {
+      const newAddress = event.args.contractAddress;
+      console.log(`✅ Campanie acceptată la adresa: ${newAddress}`);
+    } else {
+      console.warn("⚠️ Nu s-a putut extrage adresa din log.");
+    }
   }
+
+  console.log("\n🎉 Toate campaniile demo au fost create!");
 }
 
 main().catch((error) => {

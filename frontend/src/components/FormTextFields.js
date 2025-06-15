@@ -1,5 +1,11 @@
 import React from "react";
-import { TextField } from "@mui/material";
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
+} from "@mui/material";
 
 const FormTextFields = ({ form, handleChange }) => {
   return (
@@ -34,6 +40,23 @@ const FormTextFields = ({ form, handleChange }) => {
         onChange={handleChange}
         sx={{ mb: 2 }}
       />
+      <FormControl fullWidth sx={{ mb: 2 }}>
+        <InputLabel id="category-label">Categorie</InputLabel>
+        <Select
+          labelId="category-label"
+          id="category-select"
+          name="category"
+          value={form.category}
+          onChange={handleChange}
+          label="Categorie"
+        >
+          <MenuItem value="educatie">🎓 Educație</MenuItem>
+          <MenuItem value="medical">🏥 Medical</MenuItem>
+          <MenuItem value="animale">🐾 Ajutor animale</MenuItem>
+          <MenuItem value="business">💼 Afacere</MenuItem>
+          <MenuItem value="emergenta">🚨 Urgență naturală</MenuItem>
+        </Select>
+      </FormControl>
     </>
   );
 };
