@@ -34,38 +34,52 @@ const CampaignModals = ({
           💝 Donează
         </DialogTitle>
         <DialogContent>
-          <TextField
-            fullWidth
-            label="Suma donației (ETH) *"
-            type="number"
-            value={donationForm.amount}
-            onChange={(e) => onDonationChange("amount", e.target.value)}
-            sx={{ mb: 3 }}
-            InputProps={{
-              startAdornment: <InputAdornment position="start">Ξ</InputAdornment>,
-            }}
-            helperText="Introduceti suma în ETH"
-          />
-          <TextField
-            fullWidth
-            label="Numele tău (opțional)"
-            value={donationForm.name}
-            onChange={(e) => onDonationChange("name", e.target.value)}
-            sx={{ mb: 3 }}
-            InputProps={{
-              startAdornment: <InputAdornment position="start"><PersonIcon /></InputAdornment>,
-            }}
-          />
-          <TextField
-            fullWidth
-            label="Email (opțional)"
-            type="email"
-            value={donationForm.email}
-            onChange={(e) => onDonationChange("email", e.target.value)}
-            InputProps={{
-              startAdornment: <InputAdornment position="start"><EmailIcon /></InputAdornment>,
-            }}
-          />
+            <Box sx={{ pt: 2 }}>
+                <TextField
+                    fullWidth
+                    label="Suma donației (ETH) *"
+                    type="number"
+                    value={donationForm.amount}
+                    onChange={(e) => onDonationChange("amount", e.target.value)}
+                    sx={{ mb: 3 }}
+                    InputProps={{
+                    startAdornment: <InputAdornment position="start">Ξ</InputAdornment>,
+                    }}
+                    helperText="Introduceti suma în ETH"
+                />
+                <TextField
+                    fullWidth
+                    label="Numele tău (opțional)"
+                    value={donationForm.name}
+                    onChange={(e) => onDonationChange("name", e.target.value)}
+                    sx={{ mb: 3 }}
+                    InputProps={{
+                    startAdornment: <InputAdornment position="start"><PersonIcon /></InputAdornment>,
+                    }}
+                    helperText="Dacă nu completezi, vei apărea ca 'Anonim'"
+                />
+                <TextField
+                    fullWidth
+                    label="Email (opțional)"
+                    type="email"
+                    value={donationForm.email}
+                    onChange={(e) => onDonationChange("email", e.target.value)}
+                    InputProps={{
+                    startAdornment: <InputAdornment position="start"><EmailIcon /></InputAdornment>,
+                    }}
+                    helperText="Pentru a fi contactat în legătură cu donația"
+                />
+                {selected && (
+                <Box sx={{ mt: 3, p: 2, bgcolor: "rgba(0,0,0,0.05)", borderRadius: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
+                    <strong>Campania:</strong> {selected.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                    <strong>Progres:</strong> {selected.raised} ETH / {selected.goal} ETH
+                    </Typography>
+                </Box>
+                )}
+            </Box>
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
           <Button onClick={onCloseDonationDialog} variant="outlined">Anulează</Button>
@@ -106,29 +120,67 @@ const CampaignModals = ({
             <Typography variant="h5" gutterBottom fontWeight="bold">
               💰 Donatori pentru {selected?.title}
             </Typography>
-            <List sx={{ maxHeight: "50vh", overflowY: "auto" }}>
-              {donations.length > 0 ? donations.map((d, i) => (
-                <React.Fragment key={i}>
-                  <ListItem>
-                    <ListItemAvatar>
-                      <Avatar sx={{ bgcolor: "#FFD700", color: "#000" }}>
-                        <MonetizationOnIcon />
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={`${d.name} - ${d.amount} ETH`}
-                      secondary={d.email || ""}
-                    />
-                  </ListItem>
-                  {i < donations.length - 1 && <Divider />}
-                </React.Fragment>
-              )) : (
-                <Typography variant="body2" sx={{ mt: 2 }}>
-                  Nicio donație înregistrată.
-                </Typography>
-              )}
-            </List>
-            <Button fullWidth variant="outlined" sx={{ mt: 2 }} onClick={onCloseDonorsModal}>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              📍 Contract: {selected?.address?.slice(0, 6)}...{selected?.address?.slice(-4)}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" gutterBottom sx={{ mb: 3 }}>
+              📊 Progres: {selected?.raised} ETH / {selected?.goal} ETH ({selected ? ((selected.raised / selected.goal) * 100).toFixed(1) : 0}%)
+            </Typography>
+            <Box sx={{ maxHeight: "50vh", overflowY: "auto", pr: 1 }}>
+              <List>
+                {donations.length > 0 ? donations.map((donor, i) => (
+                  <React.Fragment key={i}>
+                    <ListItem>
+                      <ListItemAvatar>
+                        <Avatar sx={{ bgcolor: "#FFD700", color: "#000" }}>
+                          <MonetizationOnIcon />
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Box>
+                            <Typography variant="subtitle2" fontWeight="bold">
+                              {donor.name}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {donor.donor.slice(0, 6)}...{donor.donor.slice(-4)}
+                            </Typography>
+                          </Box>
+                        }
+                        secondary={
+                          <Box>
+                            <Typography variant="body2" color="primary" fontWeight="bold">
+                              💰 {donor.amount} ETH
+                            </Typography>
+                            {donor.email && (
+                              <Typography variant="caption" color="text.secondary">
+                                📧 {donor.email}
+                              </Typography>
+                            )}
+                          </Box>
+                        }
+                      />
+                    </ListItem>
+                    {i < donations.length - 1 && <Divider />}
+                  </React.Fragment>
+                )) : (
+                  <Box textAlign="center" py={4}>
+                    <Typography variant="body2" color="text.secondary">
+                      💭 Nu există donații înregistrate încă.
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Fii primul care donează pentru această cauză!
+                    </Typography>
+                  </Box>
+                )}
+              </List>
+            </Box>
+            <Button
+              variant="outlined"
+              fullWidth
+              sx={{ mt: 2 }}
+              onClick={onCloseDonorsModal}
+            >
               Închide
             </Button>
           </Box>
