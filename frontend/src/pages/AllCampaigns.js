@@ -1,4 +1,3 @@
-// frontend/src/pages/AllCampaigns.js
 import React, { useEffect, useState } from "react";
 import {
   Box, Typography, CircularProgress, Alert, Button
@@ -26,12 +25,25 @@ const AllCampaigns = () => {
   const [success, setSuccess] = useState("");
   const [openDonation, setOpenDonation] = useState(false);
   const [openDetails, setOpenDetails] = useState(false);
+  const [account, setAccount] = useState(null);
 
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchCampaigns();
+    getUserAccount();
   }, []);
+
+  const getUserAccount = async () => {
+    try {
+      const provider = new BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const address = await signer.getAddress();
+      setAccount(address);
+    } catch (err) {
+      console.error("Eroare la obținerea adresei:", err);
+    }
+  };
 
   const fetchCampaigns = async () => {
     try {
@@ -122,8 +134,26 @@ const AllCampaigns = () => {
       await fetchCampaigns();
     } catch (err) {
       setError("Eroare la procesarea donației.");
+      console.error(err);
     } finally {
       setDonating(false);
+    }
+  };
+
+  const handleFinalize = async (campaign) => {
+    try {
+      const provider = new BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new Contract(campaign.address, campaignABI.abi, signer);
+
+      const tx = await contract.finalizeCampaign();
+      await tx.wait();
+
+      setSuccess("✅ Campania a fost finalizată și fondurile retrase!");
+      await fetchCampaigns();
+    } catch (err) {
+      setError("❌ Eroare la finalizarea campaniei.");
+      console.error(err);
     }
   };
 
@@ -159,6 +189,8 @@ const AllCampaigns = () => {
               campaign={c}
               onDonate={handleOpenDonation}
               onDetails={handleOpenDetails}
+              onFinalize={handleFinalize}
+              isCreator={c.creator.toLowerCase() === account?.toLowerCase()}
             />
           ))}
         </Box>

@@ -29,17 +29,20 @@ const CategoryCampaignsPage = () => {
   const [openDonation, setOpenDonation] = useState(false);
   const [openDetails, setOpenDetails] = useState(false);
 
-  useEffect(() => { // fetchCampaigns merge corect, dar are "probleme" cu eslint, asa ca ii dau ignore la warning
+  const [userAddress, setUserAddress] = useState("");
+
+  useEffect(() => {
     fetchCampaigns(); // eslint-disable-next-line
   }, [category]);
 
   const fetchCampaigns = async () => {
     try {
       setLoading(true);
-      setError("");
-
       const provider = new BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
+      const account = await signer.getAddress();
+      setUserAddress(account);
+
       const factory = new Contract(factoryAddress, factoryABI.abi, signer);
       const count = await factory.getCampaignCount();
 
@@ -131,6 +134,23 @@ const CategoryCampaignsPage = () => {
     }
   };
 
+  const handleFinalizeCampaign = async (campaign) => {
+    try {
+      const provider = new BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new Contract(campaign.address, campaignABI.abi, signer);
+
+      const tx = await contract.finalizeCampaign();
+      await tx.wait();
+
+      setSuccess("✅ Campania a fost finalizată!");
+      await fetchCampaigns();
+    } catch (err) {
+      console.error("Eroare la finalizare:", err);
+      setError("Eroare la finalizarea campaniei.");
+    }
+  };
+
   return (
     <Box sx={{
       minHeight: "100vh", py: 6, px: { xs: 2, md: 4 },
@@ -157,8 +177,11 @@ const CategoryCampaignsPage = () => {
             <CampaignCard
               key={i}
               campaign={c}
+              userAddress={userAddress}
               onDonate={handleOpenDonation}
               onDetails={handleOpenDetails}
+              onFinalize={handleFinalizeCampaign}
+              isCreator={userAddress?.toLowerCase() === c.creator.toLowerCase()}
             />
           ))}
         </Box>
