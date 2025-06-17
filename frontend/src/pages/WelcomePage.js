@@ -93,14 +93,7 @@ const WelcomePage = () => {
     <Layout>
       <Container>
         <Header setOpenModal={setOpenModal} />
-        <Button
-          variant="contained"
-          color="secondary"
-          sx={{ position: "absolute", top: 16, right: 16, fontWeight: "bold" }}
-          onClick={() => setOpenAdminModal(true)}
-        >
-          Admin
-        </Button>
+        
 
         {/* Butoane categorii - FIXED ROUTES */}
         <Typography variant="h5" textAlign="center" mb={4} mt={2} fontWeight="bold">

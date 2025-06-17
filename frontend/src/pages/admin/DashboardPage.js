@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
   Typography, Button, Box, Snackbar, Alert, Modal, TextField
@@ -8,6 +9,7 @@ import FactoryABI from "../../contracts/DonationCampaignFactory.json";
 import factoryAddress from "../../contracts/factory-address.json";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [proposals, setProposals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState(null);
@@ -47,7 +49,7 @@ const Dashboard = () => {
     }
 
     fetchProposals();
-  }, []);
+  }, [contractAddress]);
 
   const handleAccept = async (id) => {
     try {
@@ -93,8 +95,22 @@ const Dashboard = () => {
   return (
     <Box sx={{ minHeight: "100vh", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", p: 4 }}>
       <Typography variant="h4" sx={{ color: "white", fontWeight: "bold", mb: 3, textAlign: "center" }}>
-        📋 Panou Admin – Gestionare Propuneri
+        Panou Admin – Gestionare Propuneri
       </Typography>
+
+      <Button
+        variant="outlined"
+        sx={{
+          mb: 3,
+          color: "white",
+          borderColor: "white",
+          "&:hover": { color: "#FFD700", borderColor: "#FFD700" },
+        }}
+        onClick={() => navigate("/admin-dashboard/statistics")}
+      >
+        📊 Accesează Statistici
+      </Button>
+
 
       {loading ? (
         <Typography color="white">Se încarcă propunerile...</Typography>
@@ -170,6 +186,16 @@ const Dashboard = () => {
           </Button>
         </Box>
       </Modal>
+
+      <Box sx={{ mt: 6, textAlign: "center" }}>
+              <Button
+                variant="outlined"
+                sx={{ color: "white", borderColor: "white", "&:hover": { borderColor: "#FFD700", color: "#FFD700" } }}
+                onClick={() => navigate("/")}
+              >
+                🏠 Înapoi la Home
+              </Button>
+            </Box>
     </Box>
   );
 };

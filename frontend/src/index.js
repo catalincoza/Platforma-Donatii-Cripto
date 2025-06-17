@@ -5,6 +5,7 @@ import App from './App';
 import WelcomePage from './pages/WelcomePage'
 import AllCampaigns from './pages/AllCampaigns';
 import Dashboard from './pages/admin/DashboardPage';
+import StatisticsDashboard from "./pages/admin/StatisticsDashboard";
 import CampaignProposals from './pages/CampaignProposals';
 import CategoryCampaignsPage from './pages/CategoryCampaignsPage';
 
@@ -18,6 +19,7 @@ root.render(
         <Route path="/all-campaigns" element={<AllCampaigns />} />
         <Route path="/campaign-proposals" element={<CampaignProposals />} />
         <Route path="/admin-dashboard" element={<Dashboard />} />
+        <Route path="/admin-dashboard/statistics" element={<StatisticsDashboard />} />
         <Route path="/:category" element={<CategoryCampaignsPage />} />
       </Routes>
     </BrowserRouter>
