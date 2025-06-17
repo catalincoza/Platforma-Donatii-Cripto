@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
-  Box, Typography, CircularProgress, Alert, Button
+  Box, Typography, CircularProgress, Alert, Button, TextField
 } from "@mui/material";
 import { BrowserProvider, Contract, formatEther, parseEther } from "ethers";
 import { useNavigate } from "react-router-dom";
@@ -16,6 +16,7 @@ const factoryAddress = factoryAddressJSON.DonationCampaignFactory;
 
 const AllCampaigns = () => {
   const [campaigns, setCampaigns] = useState([]);
+  const [filteredCampaigns, setFilteredCampaigns] = useState([]);
   const [selected, setSelected] = useState(null);
   const [donations, setDonations] = useState([]);
   const [donationForm, setDonationForm] = useState({ amount: "", name: "", email: "" });
@@ -26,6 +27,7 @@ const AllCampaigns = () => {
   const [openDonation, setOpenDonation] = useState(false);
   const [openDetails, setOpenDetails] = useState(false);
   const [account, setAccount] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const navigate = useNavigate();
 
@@ -33,6 +35,18 @@ const AllCampaigns = () => {
     fetchCampaigns();
     getUserAccount();
   }, []);
+
+  useEffect(() => {
+    const q = searchQuery.toLowerCase();
+    const filtered = campaigns.filter((c) =>
+      c.title.toLowerCase().includes(q) ||
+      c.description.toLowerCase().includes(q) ||
+      c.category.toLowerCase().includes(q) ||
+      c.creator.toLowerCase().includes(q) ||
+      c.address.toLowerCase().includes(q)
+    );
+    setFilteredCampaigns(filtered);
+  }, [searchQuery, campaigns]);
 
   const getUserAccount = async () => {
     try {
@@ -166,24 +180,35 @@ const AllCampaigns = () => {
         🌟 Campaniile active pe blockchain
       </Typography>
 
-      {success && (
-        <Alert severity="success" sx={{ mb: 3 }}>{success}</Alert>
-      )}
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>
-      )}
+      <Box textAlign="center" mb={4}>
+        <TextField
+          label="Caută campanii..."
+          variant="outlined"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          sx={{
+            backgroundColor: "white",
+            borderRadius: 2,
+            width: "100%",
+            maxWidth: 500
+          }}
+        />
+      </Box>
+
+      {success && <Alert severity="success" sx={{ mb: 3 }}>{success}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
       {loading ? (
         <Box textAlign="center">
           <CircularProgress sx={{ color: "white" }} />
         </Box>
-      ) : campaigns.length === 0 ? (
+      ) : filteredCampaigns.length === 0 ? (
         <Typography textAlign="center" color="white">
           📭 Nu există campanii disponibile momentan.
         </Typography>
       ) : (
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3, justifyContent: "center" }}>
-          {campaigns.map((c, i) => (
+          {filteredCampaigns.map((c, i) => (
             <CampaignCard
               key={i}
               campaign={c}
@@ -206,7 +231,6 @@ const AllCampaigns = () => {
         </Button>
       </Box>
 
-      {/* Modale reutilizabile */}
       <CampaignModals
         selected={selected}
         donations={donations}

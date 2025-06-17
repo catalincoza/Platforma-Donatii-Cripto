@@ -96,10 +96,29 @@ const WelcomePage = () => {
         
 
         {/* Butoane categorii - FIXED ROUTES */}
-        <Typography variant="h5" textAlign="center" mb={4} mt={2} fontWeight="bold">
+        <Typography
+          variant="h5"
+          textAlign="center"
+          sx={{
+            mt: 6,
+            mb: 3,
+            color: "white",
+            fontWeight: "bold",
+            textShadow: "1px 1px 3px rgba(0,0,0,0.6)"
+          }}
+        >
           Alege o categorie de campanie:
         </Typography>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 4, justifyContent: "center" }}>
+
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "repeat(3, 1fr)" },
+            gap: 4,
+            justifyItems: "center",
+            width: "100%",
+          }}
+        >
           {[
             { label: "Educație", image: educationImg, category: "educatie" },
             { label: "Medical", image: medicalImg, category: "medical" },
@@ -109,29 +128,41 @@ const WelcomePage = () => {
           ].map(({ label, image, category }) => (
             <Box
               key={label}
-              sx={{
-                width: 200,
-                height: 160,
-                borderRadius: 2,
-                overflow: "hidden",
-                cursor: "pointer",
-                position: "relative",
-                boxShadow: 4,
-                "&:hover": { boxShadow: 8 },
-              }}
               onClick={() => navigate(`/${category}`)}
-            >
-              <img src={image} alt={label} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              <Box sx={{
-                position: "absolute",
-                bottom: 0,
+              sx={{
                 width: "100%",
-                background: "rgba(0,0,0,0.6)",
-                color: "white",
-                textAlign: "center",
-                py: 1,
-                fontWeight: "bold"
-              }}>
+                maxWidth: 240,
+                height: 160,
+                borderRadius: 3,
+                overflow: "hidden",
+                position: "relative",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                cursor: "pointer",
+                transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                "&:hover": {
+                  transform: "scale(1.05)",
+                  boxShadow: "0 6px 20px rgba(0,0,0,0.35)",
+                },
+              }}
+            >
+              <img
+                src={image}
+                alt={label}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+              <Box
+                sx={{
+                  position: "absolute",
+                  bottom: 0,
+                  width: "100%",
+                  background: "rgba(0,0,0,0.6)",
+                  color: "white",
+                  textAlign: "center",
+                  py: 1,
+                  fontWeight: "bold",
+                  letterSpacing: 1
+                }}
+              >
                 {label}
               </Box>
             </Box>

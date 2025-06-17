@@ -111,6 +111,14 @@ const Dashboard = () => {
         📊 Accesează Statistici
       </Button>
 
+      <Button
+        variant="outlined"
+        sx={{ mb: 3, color: "white", borderColor: "white", "&:hover": { borderColor: "#FFD700", color: "#FFD700" } }}
+        onClick={() => navigate("/admin-dashboard/donations")}
+      >
+        📜 Vezi Istoric Donații Global
+      </Button>
+
 
       {loading ? (
         <Typography color="white">Se încarcă propunerile...</Typography>
